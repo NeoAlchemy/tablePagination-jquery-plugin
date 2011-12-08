@@ -18,10 +18,11 @@
  *      currPage - Number - This is to determine what the starting current page is. Default: 1
  *      optionsForRows - Array - This is to set the values on the rows per page. Default: [5,10,25,50,100]
  *      ignoreRows - Array - This is to specify which 'tr' rows to ignore. It is recommended that you have those rows be invisible as they will mess with page counts. Default: []
+ *      topNav - Boolean - This specifies the desire to have the navigation be a top nav bar
  *
  *
  * @author Ryan Zielke (neoalchemy.org)
- * @version 0.4
+ * @version 0.5
  * @requires jQuery v1.2.3 or above
  */
 
@@ -36,7 +37,8 @@
 			rowsPerPage : 5,
 			currPage : 1,
 			optionsForRows : [5,10,25,50,100],
-			ignoreRows : []
+			ignoreRows : [],
+			topNav : false
 		};  
 		settings = $.extend(defaults, settings);
 		
@@ -50,6 +52,7 @@
       prevPageId = '#tablePagination_prevPage';
       nextPageId = '#tablePagination_nextPage';
       lastPageId = '#tablePagination_lastPage';
+      var tblLocation = (defaults.topNav) ? "prev" : "next";
 
       var possibleTableRows = $.makeArray($('tbody tr', table));
       var tableRows = $.grep(possibleTableRows, function(value, index) {
@@ -79,8 +82,8 @@
       function resetTotalPages() {
         var preTotalPages = Math.round(numRows / defaults.rowsPerPage);
         var totalPages = (preTotalPages * defaults.rowsPerPage < numRows) ? preTotalPages + 1 : preTotalPages;
-        if ($(table).next().find(totalPagesId).length > 0)
-          $(table).next().find(totalPagesId).html(totalPages);
+        if ($(table)[tblLocation]().find(totalPagesId).length > 0)
+          $(table)[tblLocation]().find(totalPagesId).html(totalPages);
         return totalPages;
       }
       
@@ -89,14 +92,14 @@
           return;
         currPageNumber = currPageNum;
         hideOtherPages(currPageNumber);
-        $(table).next().find(currPageId).val(currPageNumber)
+        $(table)[tblLocation]().find(currPageId).val(currPageNumber)
       }
       
       function resetPerPageValues() {
         var isRowsPerPageMatched = false;
         var optsPerPage = defaults.optionsForRows;
         optsPerPage.sort(function (a,b){return a - b;});
-        var perPageDropdown = $(table).next().find(rowsPerPageId)[0];
+        var perPageDropdown = $(table)[tblLocation]().find(rowsPerPageId)[0];
         perPageDropdown.length = 0;
         for (var i=0;i<optsPerPage.length;i++) {
           if (optsPerPage[i] == defaults.rowsPerPage) {
@@ -132,36 +135,40 @@
         return htmlBuffer.join("").toString();
       }
       
-      if ($(table).next().find(totalPagesId).length == 0) {
-        $(this).after(createPaginationElements());
+      if ($(table)[tblLocation]().find(totalPagesId).length == 0) {
+		if (defaults.topNav) {
+			$(this).before(createPaginationElements());
+		} else {
+			$(this).after(createPaginationElements());
+		}
       }
       else {
-        $(table).next().find(currPageId).val(currPageNumber);
+        $(table)[tblLocation]().find(currPageId).val(currPageNumber);
       }
       resetPerPageValues();
       hideOtherPages(currPageNumber);
       
-      $(table).next().find(firstPageId).bind('click', function (e) {
+      $(table)[tblLocation]().find(firstPageId).bind('click', function (e) {
         resetCurrentPage(1)
       });
       
-      $(table).next().find(prevPageId).bind('click', function (e) {
+      $(table)[tblLocation]().find(prevPageId).bind('click', function (e) {
         resetCurrentPage(currPageNumber - 1)
       });
       
-      $(table).next().find(nextPageId).bind('click', function (e) {
+      $(table)[tblLocation]().find(nextPageId).bind('click', function (e) {
         resetCurrentPage(parseInt(currPageNumber) + 1)
       });
       
-      $(table).next().find(lastPageId).bind('click', function (e) {
+      $(table)[tblLocation]().find(lastPageId).bind('click', function (e) {
         resetCurrentPage(totalPages)
       });
       
-      $(table).next().find(currPageId).bind('change', function (e) {
+      $(table)[tblLocation]().find(currPageId).bind('change', function (e) {
         resetCurrentPage(this.value)
       });
       
-      $(table).next().find(rowsPerPageId).bind('change', function (e) {
+      $(table)[tblLocation]().find(rowsPerPageId).bind('change', function (e) {
         defaults.rowsPerPage = parseInt(this.value, 10);
         totalPages = resetTotalPages();
         resetCurrentPage(1)
